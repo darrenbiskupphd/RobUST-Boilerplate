@@ -43,34 +43,6 @@ public struct ForcePlateData
 }
 
 
-[System.Serializable]
-public struct RobotState
-{
-    // COM state (from COM tracker, treated as COM up to constant bias)
-    public double3 comPosition;    // [m]
-    public double3 comVelocity;    // [m/s]
-    public quaternion trunkOrientation;
-    public double3 totalGRF;       // sum of all foot forces [N]
-    public double3 globalCOP;      // effective CoP in robot frame [m]
-
-    public RobotState(double3 cp, double3 cv, quaternion to, double3 grf, double3 cop)
-    {
-        comPosition = cp;
-        comVelocity = cv;
-        trunkOrientation = to;
-        totalGRF = grf;
-        globalCOP = cop;
-    }
-}
-
-[System.Serializable]
-public struct Hyperparameter
-{
-    public double mass;
-    public double3 Inertia;
-    public double3 InertiaCovariance;
-
-}
 
 [System.Serializable]
 public struct Wrench

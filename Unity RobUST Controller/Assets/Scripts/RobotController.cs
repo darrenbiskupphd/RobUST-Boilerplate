@@ -136,7 +136,7 @@ public class RobotController : MonoBehaviour
     /// </summary>
     private void controlLoop()
     {
-        TrackerData rawComData, rawEndEffectorData;
+        TrackerData rawChestTrackerData, rawPelvisTrackerData;
         Span<double> motor_command = stackalloc double[14];
 
         double frequency = System.Diagnostics.Stopwatch.Frequency;
@@ -152,18 +152,18 @@ public class RobotController : MonoBehaviour
             lastLoopTick = loopStartTick;
 
             // 1. Get the latest raw tracker data (in the arbitrary, RIGHT-HANDED OpenVR/Vive coordinate system).
-            trackerManager.GetCoMTrackerData(out rawComData);
-            trackerManager.GetEndEffectorTrackerData(out rawEndEffectorData);
+            trackerManager.GetChestTrackerData(out rawChestTrackerData);
+            trackerManager.GetPelvisTrackerData(out rawPelvisTrackerData);
 
             // 2. Cache tracker data for visualization (thread-safe, applied in visualizer's Update())
-            visualizer.SetTrackerData(rawComData, rawEndEffectorData, robot_frame_tracker);
+            visualizer.SetTrackerData(rawChestTrackerData, rawPelvisTrackerData, robot_frame_tracker);
 
             //Here we parse the control effort that we obtained from the controller, to be implemented
-            Wrench controllerOutput = new Wrench { Force = double3.zero, Torque = double3.zero };
+            Wrench goalWrench = new Wrench { Force = double3.zero, Torque = double3.zero };
 
             // double[] solverResult = tensionPlanner.CalculateTensions(
-            //     rawEndEffectorData.PoseMatrix,
-            //     controllerOutput,
+            //     rawChestTrackerData.PoseMatrix,
+            //     goalWrench,
             //     robot_frame_tracker.PoseMatrix
             // );
 
@@ -196,18 +196,18 @@ public class RobotController : MonoBehaviour
     /// Useful for manually recording pulley positions during calibration.
     /// </summary>
     /// <returns>Position relative to frame tracker </returns>
-    public double4x4 GetEEPoseRelativeToFrame()
+    public double4x4 GetChestPoseRelativeToFrame()
     {
-        // Grab EE pose (UnityEngine.Matrix4x4 stored in TrackerData)
-        trackerManager.GetEndEffectorTrackerData(out TrackerData eeData);
+        // Grab chest pose (UnityEngine.Matrix4x4 stored in TrackerData)
+        trackerManager.GetChestTrackerData(out TrackerData chestData);
 
         // Convert both matrices to Unity.Mathematics.double4x4
-        double4x4 eePose = ToDouble4x4(eeData.PoseMatrix);
+        double4x4 chestPose = ToDouble4x4(chestData.PoseMatrix);
         double4x4 framePose = ToDouble4x4(robot_frame_tracker.PoseMatrix);
 
-        // Compute relative pose: frame^-1 * ee
+        // Compute relative pose: frame^-1 * chest
         double4x4 frameInv = math.inverse(framePose);
-        return math.mul(frameInv, eePose);
+        return math.mul(frameInv, chestPose);
     }
 
     // Local helper (keep near RobotController; same as you already used elsewhere)
