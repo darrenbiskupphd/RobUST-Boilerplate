@@ -1,4 +1,4 @@
-This boilerplate is still under construction and is currently mostly copied from `grf-mpc-RobUST-trainer` repo
+**This boilerplate is still under construction and is currently mostly copied from `grf-mpc-RobUST-trainer` repo**
 
 # RobUST Robot Control Framework
 
@@ -36,11 +36,11 @@ The framework employs three main driver scripts (`LabviewTcpCommunicator`, `Trac
 
 Manages communication with the low-level motor controller running on a PXIe system:
 
-- **Frequency**: 500 Hz TCP transmission
-- **Configuration**: Motor indices set during initialization
-- **Interface**: `UpdateTensionSetpoint(double[] setpoints)` for real-time updates
-- **Protocol**: Sends motor index and tension setpoint pairs via TCP
-- **Port**: 8052 (configurable)
+- **Frequency**: 1000 Hz TCP transmission
+- **Configuration**: PXIe IP address set in Unity Inspector, `tcpCommunicator.ConnectToServer()` called during initialization
+- **Interface**: `UpdateTensionSetpoint(ReadOnlySpan<double> setpoints)` for real-time updates
+- **Protocol**: Sends control mode + tension setpoints via TCP
+- **Port**: 8053 (configurable)
 
 ### `TrackerManager.cs`
 
@@ -48,7 +48,7 @@ Interfaces with HTC Vive tracking system for pose estimation:
 
 - **Frequency**: 90 Hz (limited by HTC hardware)
 - **API**: OpenVR for direct access to tracker transformation matrices
-- **Configuration**: Supports 3 trackers (frame reference, end-effector, center of mass)
+- **Configuration**: Set up to support 3 trackers (frame reference, belt frames) but more can be added
 - **Setup**: Automatically discovers connected trackers and displays serial numbers for configuration
 - **Coordinate System**: Uses HTC Vive tracker orientation guidelines
 
@@ -56,7 +56,6 @@ Interfaces with HTC Vive tracking system for pose estimation:
 
 Integrates with Vicon force measurement systems:
 
-- **Status**: Have to test in live mode on RobUST
 - **Interface**: Vicon DataStream SDK via Unity Vicon Plugin
 - **Architecture**: Utilizies `ServerPush` mode meaning Vicon Box triggers timing
 
@@ -73,15 +72,15 @@ Solves the cable tension optimization problem using quadratic programming:
   - Chest anteroposterior distance
   - Chest mediolateral distance
   - Belt size (small/medium/large)
-- **Primary Function**: `CalculateTensions(Matrix4x4 endEffectorPose, Vector3 desiredForce, Vector3 desiredTorque, Matrix4x4 robotFramePose)`
+- **Primary Function**: `CalculateTensions(Matrix4x4 endEffectorPose, Wrench desiredWrench, Matrix4x4 robotFramePose)`
 
 ### RobotVisualizer
 
 Handles Unity scene updates and coordinate frame transformations for visualization only:
 
 - **Coordinate Conversion**: Right-handed tracker data to left-handed Unity coordinate system
-- **Initialization**: Captures single frame tracker snapshot for reference positioning
-- **Camera Setup**: Positions Unity camera relative to frame tracker for optimal viewing
+- **Initialization**: Draws spheres for pulley locations for reference positioning
+- **Camera Setup**: auto-positions Unity camera relative to frame tracker
 
 ## Setup and Installation
 
@@ -98,7 +97,7 @@ Handles Unity scene updates and coordinate frame transformations for visualizati
 2. Open Project in Unity
 - Launch Unity Hub
 - Select "Open Project"
-- Navigate to and select the "Darren RobUST Controller" folder
+- Navigate to and select the "Unity RobUST Controller" folder
 3. Load Scene
 - Open the "Robot Controller Scene" in Unity
 4. Configure SteamVR
@@ -110,20 +109,23 @@ Handles Unity scene updates and coordinate frame transformations for visualizati
 - Run the project once to see discovered tracker serial numbers in console
 - Copy serial numbers to appropriate variables in TrackerManager:
   - Frame tracker serial
-  - End-effector tracker serial
-  - Center of mass tracker serial
-6. Open Preferred Vicon Software
+  - Chest belt tracker serial
+  - Pelvis belt tracker serial
+6. Open Vicon Software
+- Go into "Live Mode" to for box-triggered data streaming
 
-Testing Without Hardware
-For development and testing without the full LabVIEW motor control system:
 **Simulate Local TCP Listener**
+
+For development and testing without the full LabVIEW motor control system set IP address in inspector to `127.0.0.1` or `localhost` and run a local TCP listener using `ncat` or similar tool:
+
 ```bash
-ncat -l 8052
+ncat -l 8053
 ```
+
 This will display incoming motor commands for verification of communication protocols.
 
 ### Dependencies
-- Unity: 2021.3 LTS or newer recommended
+- Unity: 2021.3 LTS or newer
 - SteamVR: Latest version through Steam
 - OpenVR: Included with SteamVR installation
 - Vicon Unity Plugin 1.3 `.unitypackage`
