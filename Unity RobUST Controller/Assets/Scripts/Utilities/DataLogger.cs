@@ -29,6 +29,10 @@ public class DataLogger
     private int _maxFrames;
     private string _baseFolder;
 
+    private readonly double _anchorEpochSeconds; // Seconds elapsed from Unix epoch (January 1970)
+    private readonly long   _anchorTick;
+    private readonly double _tickToSeconds;
+
     public int FrameCount => _cursor;
 
     /// <param name="maxMinutes">Maximum duration to buffer in RAM.</param>
@@ -45,6 +49,11 @@ public class DataLogger
         
         _baseFolder = Path.Combine(Directory.GetParent(Application.dataPath).FullName, "ExperimentLogs");
         if (!Directory.Exists(_baseFolder)) Directory.CreateDirectory(_baseFolder);
+
+        // Anchor the wall-clock epoch and the hardware counter at the same instant.
+        _anchorEpochSeconds = (DateTime.UtcNow - DateTime.UnixEpoch).TotalSeconds;
+        _anchorTick = System.Diagnostics.Stopwatch.GetTimestamp();
+        _tickToSeconds = 1.0 / System.Diagnostics.Stopwatch.Frequency;
     }
 
     /// <summary>
@@ -59,7 +68,8 @@ public class DataLogger
         // Direct array access by reference to avoid structure copy
         ref DataFrame frame = ref _buffer[_cursor];
         
-        frame.Timestamp = (double)timestamp_tick / (double)System.Diagnostics.Stopwatch.Frequency;
+        // Absolute UTC timestamp in seconds since Unix epoch
+        frame.Timestamp = _anchorEpochSeconds + ((timestamp_tick - _anchorTick) * _tickToSeconds);
         frame.ComPoseRF = comPose;
         frame.EEPoseRF = eePose;
         frame.FP1 = fp1;
@@ -100,7 +110,7 @@ public class DataLogger
                 sb.Append("FP2_Fx,FP2_Fy,FP2_Fz,FP2_CoPx,FP2_CoPy,FP2_CoPz,");
                 sb.Append("Goal_Fx,Goal_Fy,Goal_Fz,Goal_Tx,Goal_Ty,Goal_Tz,");
                 // RBState fields: p (position), th (euler), v (linear vel), w (angular vel)
-                sb.Append("Goal_Px,Goal_Py,Goal_Pz,Goal_Ex,Goal_Ey,Goal_Ez,Goal_Vx,Goal_Vy,Goal_Vz,Goal_Wx,Goal_Wy,Goal_Wz"); 
+                sb.Append("Goal_Px,Goal_Py,Goal_Pz,Goal_Ex,Goal_Ey,Goal_Ez,Goal_Vx,Goal_Vy,Goal_Vz,Goal_Wx,Goal_Wy,Goal_Wz,");
                 
                 writer.WriteLine(sb.ToString());
 
@@ -110,7 +120,8 @@ public class DataLogger
                     ref DataFrame f = ref _buffer[i];
                     sb.Clear();
                     
-                    sb.Append(f.Timestamp).Append(',');
+                    // G17 + InvariantCulture guarantees exact IEEE 754 round-trip (no mantissa truncation).
+                    sb.Append(f.Timestamp.ToString("G17", CultureInfo.InvariantCulture)).Append(',');
                     
                     AppendMatrix(sb, f.ComPoseRF);
                     AppendMatrix(sb, f.EEPoseRF);
@@ -155,6 +166,6 @@ public class DataLogger
 
     private void AppendVec3(StringBuilder sb, in double3 v)
     {
-        sb.Append($"{v.x:F5},{v.y:F5},{v.z:F5},");
+        sb.Append(v.x).Append(',').Append(v.y).Append(',').Append(v.z).Append(',');
     }
 }
