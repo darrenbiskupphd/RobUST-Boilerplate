@@ -1,6 +1,8 @@
 ﻿<?xml version='1.0' encoding='UTF-8'?>
 <Project Type="Project" LVVersion="24008000">
 	<Property Name="varPersistentID:{00611030-CAAC-41C4-9549-466DE46B5AD8}" Type="Ref">/NI-PXIe8880-03117F0A/PXI_Host_Shared_Vars.lvlib/Tension_Telemetry</Property>
+	<Property Name="varPersistentID:{00DCFCD2-CE58-444C-B0C2-662F4B9CF38B}" Type="Ref">/NI-PXIe8880-03117F0A/PXI_Host_Shared_Vars.lvlib/curr_Tensions_FIFO</Property>
+	<Property Name="varPersistentID:{A5A1887A-62E3-41ED-8BBF-74BF38E00A5D}" Type="Ref">/NI-PXIe8880-03117F0A/PXI_Host_Shared_Vars.lvlib/goal_Tensions_FIFO</Property>
 	<Item Name="My Computer" Type="My Computer">
 		<Property Name="IOScan.Faults" Type="Str"></Property>
 		<Property Name="IOScan.NetVarPeriod" Type="UInt">100</Property>
@@ -115,7 +117,6 @@ AddOutputFilter chunkFilter
 		</Item>
 		<Item Name="Utility" Type="Folder">
 			<Item Name="clamp_vals_array.vi" Type="VI" URL="../clamp_vals_array.vi"/>
-			<Item Name="Goal_Tensions_FGV.vi" Type="VI" URL="../Goal_Tensions_FGV.vi"/>
 		</Item>
 		<Item Name="Controllers" Type="Folder">
 			<Item Name="Manual_Control_Main.vi" Type="VI" URL="../Manual_Control_Main.vi"/>
